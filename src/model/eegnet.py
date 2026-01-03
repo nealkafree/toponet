@@ -72,3 +72,13 @@ class EEGNet(nn.Module):
         x = self.linear(x)
         x = nn.functional.relu(x)
         return self.classifier(x)
+
+    def spatial_activation(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Returns activations from layer with spatial constraints.
+        """
+        x = x.unsqueeze(0).unsqueeze(0)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.linear(x)
+        return x

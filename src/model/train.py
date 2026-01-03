@@ -91,14 +91,14 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
     return acc, loss_data
 
 
-def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimizer,
+def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, optimizer,
                 spatial_regularization=0.0, spatial_grid_width=6, disable_logs=False):
     """
     Trains model for set amount of epochs.
     :param model:
     :param train_loader:
     :param validation_loader:
-    :param epochs:
+    :param max_epochs:
     :param loss_fn:
     :param optimizer:
     :param spatial_regularization: regularization parameter for spatial loss.
@@ -114,8 +114,8 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
         'valid_loss': [], 'valid_sp_loss': [],
         'train_acc': [], 'valid_acc': [],
     }
-    stop_count = 20
-    for epoch in tqdm(range(epochs), disable=disable_logs):
+    stop_count = 50
+    for epoch in tqdm(range(max_epochs), disable=disable_logs):
         # Train step
         train_acc, train_loss_data = step(model, train_loader, loss_fn, optimizer,
                                           spatial_regularization=spatial_regularization,
@@ -153,7 +153,7 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
         # Using performance loss as indication for a moment to stop training
         if valid_loss_data["performance_loss"] < best_loss:
             best_loss = valid_loss_data["performance_loss"]
-            stop_count = 20
+            stop_count = 50
 
         # If 20 epochs passed since lowest loss record was renewed last time - stop training
         stop_count -= 1
