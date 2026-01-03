@@ -107,6 +107,7 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
     :return: Highest performing checkpoint, Logs with metrics for every epoch.
     """
     best_acc = 0
+    best_loss = float('inf')
     best_checkpoint = {}
     training_history = {
         'train_loss': [], 'train_sp_loss': [],
@@ -122,20 +123,20 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
                                           test=False)
 
         # Test step
-        validation_acc, test_loss_data = step(model, validation_loader, loss_fn, optimizer,
-                                              spatial_regularization=spatial_regularization,
-                                              spatial_grid_width=spatial_grid_width,
-                                              test=True)
+        validation_acc, valid_loss_data = step(model, validation_loader, loss_fn, optimizer,
+                                               spatial_regularization=spatial_regularization,
+                                               spatial_grid_width=spatial_grid_width,
+                                               test=True)
 
         if not disable_logs:
             print(
-                f'After epoch {epoch}, avg training loss is {train_loss_data["performance_loss"] + train_loss_data["spatial_loss"]:.4f}, avg validation loss is {test_loss_data["performance_loss"] + test_loss_data["spatial_loss"]:.4f}, acc on train set is {train_acc * 100:.2f}% and acc on validation set is {validation_acc * 100:.2f}%')
+                f'After epoch {epoch}, avg training loss is {train_loss_data["performance_loss"] + train_loss_data["spatial_loss"]:.4f}, avg validation loss is {valid_loss_data["performance_loss"] + valid_loss_data["spatial_loss"]:.4f}, acc on train set is {train_acc * 100:.2f}% and acc on validation set is {validation_acc * 100:.2f}%')
 
         # Saving logs
         training_history['train_loss'].append(train_loss_data['performance_loss'])
         training_history['train_sp_loss'].append(train_loss_data['spatial_loss'])
-        training_history['valid_loss'].append(test_loss_data['performance_loss'])
-        training_history['valid_sp_loss'].append(test_loss_data['spatial_loss'])
+        training_history['valid_loss'].append(valid_loss_data['performance_loss'])
+        training_history['valid_sp_loss'].append(valid_loss_data['spatial_loss'])
         training_history['train_acc'].append(train_acc)
         training_history['valid_acc'].append(validation_acc)
 
@@ -146,11 +147,15 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
                 'epoch': epoch,
                 'state_dict': copy.deepcopy(model.state_dict()),
                 'accuracy': validation_acc,
-                'loss': test_loss_data["performance_loss"] + test_loss_data["spatial_loss"],
+                'loss': valid_loss_data["performance_loss"] + valid_loss_data["spatial_loss"],
             }
+
+        # Using performance loss as indication for a moment to stop training
+        if valid_loss_data["performance_loss"] < best_loss:
+            best_loss = valid_loss_data["performance_loss"]
             stop_count = 20
 
-        # If 20 epochs passed since accuracy record was renewed last time - stop training
+        # If 20 epochs passed since lowest loss record was renewed last time - stop training
         stop_count -= 1
         if stop_count == 0:
             break
