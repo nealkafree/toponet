@@ -7,7 +7,7 @@ import pickle
 
 from tqdm import tqdm
 
-import src.preprocess.preprocess_pipeline as pipeline
+from . import preprocess_pipeline
 
 if __name__ == '__main__':
     # Todo: Move paths to config
@@ -18,8 +18,8 @@ if __name__ == '__main__':
 
     for d in tqdm(d_list):
         if d.startswith('sub'):
-            raw_data = pipeline.load_subject_data(d)
-            train_set, test_set = pipeline.preprocess_data(raw_data)
+            raw_data = preprocess_pipeline.load_subject_data(d)
+            train_set, test_set = preprocess_pipeline.preprocess_data(raw_data)
 
             os.makedirs(os.path.join(PREPROCESSED_DATA_DIRECTORY, d), exist_ok=True)
             # Data is not big, so we just use pickle

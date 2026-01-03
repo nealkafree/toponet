@@ -24,7 +24,7 @@ class ConstrainedLinear(nn.Linear):
 
 class EEGNet(nn.Module):
     def __init__(self, sensors: int, samples: int, num_classes: int, filter_size=64, f1=8, depth=2, f2=16,
-                 spatial_layer_size=36, dropout=0.25):
+                 spatial_layer_size=36, dropout=0.5):
         super().__init__()
         self.block1 = nn.Sequential(
             # This layer does 1d convolutions on data from sensors.
@@ -70,4 +70,5 @@ class EEGNet(nn.Module):
         x = self.block1(x)
         x = self.block2(x)
         x = self.linear(x)
+        x = nn.functional.relu(x)
         return self.classifier(x)

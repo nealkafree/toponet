@@ -91,8 +91,8 @@ def cut_to_trials(raw_data):
     face_events = mne.pick_events(events[0], include=[2, 10])
     scrambled_events = mne.pick_events(events[0], include=[7, 8, 9])
 
-    face_epochs = mne.Epochs(raw_data, face_events, tmin=-0.3, tmax=1, preload=True)
-    scrambled_epochs = mne.Epochs(raw_data, scrambled_events, tmin=-0.3, tmax=1, preload=True)
+    face_epochs = mne.Epochs(raw_data.pick('eeg'), face_events, tmin=-0.3, tmax=1, preload=True)
+    scrambled_epochs = mne.Epochs(raw_data.pick('eeg'), scrambled_events, tmin=-0.3, tmax=1, preload=True)
 
     # Data before the onset of stimulus is needed only for baseline correction, so we cut it off
     face_epochs.crop(0, 1)

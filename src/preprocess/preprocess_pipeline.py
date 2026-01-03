@@ -3,12 +3,12 @@ import random
 
 import mne
 
-import src.preprocess.preprocess_functions as preprocess
+from . import preprocess_functions
 
 mne.set_log_level('WARNING')
 
 # Todo: Move path to config
-ORIGINAL_DATA_DIRECTORY = './topography/data/FaceRecognition'
+ORIGINAL_DATA_DIRECTORY = '/home/daniil.kirillov@unitn.it/topography/data/FaceRecognition'
 
 
 def load_subject_data(subject_name):
@@ -26,17 +26,17 @@ def preprocess_data(raw_data):
     :return: (train_set, test_set) of (trial, label) as items.
     """
     # Applying bandpass filter
-    raw_data = preprocess.apply_filtering(raw_data)
+    raw_data = preprocess_functions.apply_filtering(raw_data)
 
     # Applying PREP pipeline in order to robustly reference signal and interpolate bad channels
-    raw_data = preprocess.apply_prep(raw_data)
+    raw_data = preprocess_functions.apply_prep(raw_data)
 
     # Applying ICA to clean ocular and heartbeat artefacts
-    raw_data = preprocess.apply_ica(raw_data)
+    raw_data = preprocess_functions.apply_ica(raw_data)
 
     # Cutting experiment to trials of one second length with baseline correction
     # We get two sets for two conditions
-    face_trials, scrambled_trials = preprocess.cut_to_trials(raw_data)
+    face_trials, scrambled_trials = preprocess_functions.cut_to_trials(raw_data)
 
     # Adding labels to trials
     face_trials = [(trial, 0) for trial in face_trials]
