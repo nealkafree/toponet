@@ -63,7 +63,7 @@ def train_with_cross_validation(model_class, model_params, train_data, test_data
 
         resulting_models.append({
             'model': copy.deepcopy(model.state_dict()),
-            'test_accuracy': test_acc.item(),
+            'test_accuracy': test_acc,
             'test_loss': test_loss_data["performance_loss"] + test_loss_data["spatial_loss"],
             'epoch': best_checkpoint['epoch'],
             'training_history': training_history,

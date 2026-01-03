@@ -113,6 +113,7 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
         'valid_loss': [], 'valid_sp_loss': [],
         'train_acc': [], 'valid_acc': [],
     }
+    stop_count = 20
     for epoch in tqdm(range(epochs), disable=disable_logs):
         # Train step
         train_acc, train_loss_data = step(model, train_loader, loss_fn, optimizer,
@@ -128,7 +129,7 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
 
         if not disable_logs:
             print(
-                f'After epoch {epoch}, avg training loss is {train_loss_data["loss"] + train_loss_data["sp_loss"]:.4f}, avg validation loss is {test_loss_data["loss"] + test_loss_data["sp_loss"]:.4f}, acc on train set is {train_acc * 100:.2f}% and acc on validation set is {validation_acc * 100:.2f}%')
+                f'After epoch {epoch}, avg training loss is {train_loss_data["performance_loss"] + train_loss_data["spatial_loss"]:.4f}, avg validation loss is {test_loss_data["performance_loss"] + test_loss_data["spatial_loss"]:.4f}, acc on train set is {train_acc * 100:.2f}% and acc on validation set is {validation_acc * 100:.2f}%')
 
         # Saving logs
         training_history['train_loss'].append(train_loss_data['performance_loss'])
@@ -147,4 +148,11 @@ def train_model(model, train_loader, validation_loader, epochs, loss_fn, optimiz
                 'accuracy': validation_acc,
                 'loss': test_loss_data["performance_loss"] + test_loss_data["spatial_loss"],
             }
+            stop_count = 20
+
+        # If 20 epochs passed since accuracy record was renewed last time - stop training
+        stop_count -= 1
+        if stop_count == 0:
+            break
+
     return best_checkpoint, training_history
