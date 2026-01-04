@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 from sklearn.model_selection import KFold
 
-from . import train
+import train
 
 # Todo: move to config
 DEVICE = torch.device("cuda:0")

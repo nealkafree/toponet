@@ -3,7 +3,7 @@ import copy
 import torch
 from tqdm import tqdm
 
-from . import loss
+import loss
 
 # Todo: move to config
 DEVICE = torch.device("cuda:0")
@@ -27,13 +27,13 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
     else:
         model.train()
 
-    # y_preds = torch.empty(0, device=DEVICE)
-    # y_targets = torch.empty(0, device=DEVICE)
+    # Set up loss object
+    balanced_loss = loss.BalancedLoss(loss_fn, model, spatial_regularization, spatial_grid_width)
+
     loss_data = {
         'performance_loss': 0.0,
         'spatial_loss': 0.0
     }
-    dynamic_regularization = 0
     correct_predictions = 0
     total_samples = 0
 
@@ -52,15 +52,7 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
                 spatial_loss = torch.tensor(0.0, device=DEVICE)
             else:
                 # Calculate balanced loss based on performance loss and spatial loss
-                # Todo: move loss to an object
-                performance_loss, spatial_loss, reg_update = loss.balanced_loss(loss_fn,
-                                                                                y_logits,
-                                                                                y,
-                                                                                model,
-                                                                                dynamic_regularization,
-                                                                                spatial_regularization,
-                                                                                spatial_grid_width)
-                dynamic_regularization = reg_update
+                performance_loss, spatial_loss = balanced_loss.calculate_loss(y_logits, y)
                 full_loss = performance_loss + spatial_loss
                 # Zero gradients
                 optimizer.zero_grad()
@@ -78,11 +70,6 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
             # Accumulate accuracy
             total_samples += y.size(0)
             correct_predictions += (yp == y).sum().item()
-
-            # # Saving predictions
-            # y_preds = torch.cat((y_preds, yp), dim=0)
-            # # Saving targets
-            # y_targets = torch.cat((y_targets, y), dim=0)
 
     # Calculate average loss and accuracy for the epoch
     loss_data['performance_loss'] = loss_data['performance_loss'] / total_samples

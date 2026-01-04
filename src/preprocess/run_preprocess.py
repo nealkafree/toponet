@@ -7,12 +7,12 @@ import pickle
 
 from tqdm import tqdm
 
-from . import preprocess_pipeline
+import preprocess_pipeline
 
 if __name__ == '__main__':
     # Todo: Move paths to config
     ORIGINAL_DATA_DIRECTORY = './topography/data/FaceRecognition'
-    PREPROCESSED_DATA_DIRECTORY = './preprocessed_data'
+    PREPROCESSED_DATA_DIRECTORY = './topo/preprocessed_data'
 
     d_list = os.listdir(ORIGINAL_DATA_DIRECTORY)
 

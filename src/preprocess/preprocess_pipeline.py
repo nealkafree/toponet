@@ -3,7 +3,7 @@ import random
 
 import mne
 
-from . import preprocess_functions
+import preprocess_functions
 
 mne.set_log_level('WARNING')
 
