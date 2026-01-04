@@ -5,11 +5,8 @@ from tqdm import tqdm
 
 import loss
 
-# Todo: move to config
-DEVICE = torch.device("cuda:0")
 
-
-def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_grid_width=6, test=False):
+def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_average=0.1, test=False):
     """
     Performs one training or test step (depends on parameters).
     :param model:
@@ -17,7 +14,7 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
     :param loss_fn:
     :param optimizer:
     :param spatial_regularization: regularization parameter for spatial loss.
-    :param spatial_grid_width: width of the grid for spatial loss.
+    :param moving_average: moving average parameter for spatial loss.
     :param test: True if test step, False if train step.
     :return: Accuracy of predictions and average loss during the training or testing cycle.
     """
@@ -26,9 +23,8 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
         model.eval()
     else:
         model.train()
-
-    # Set up loss object
-    balanced_loss = loss.BalancedLoss(loss_fn, model, spatial_regularization, spatial_grid_width)
+        # Set up loss object
+        balanced_loss = loss.BalancedLoss(loss_fn, model, spatial_regularization, moving_average)
 
     loss_data = {
         'performance_loss': 0.0,
@@ -40,16 +36,16 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
     # Set mode for training or testing
     with torch.inference_mode(test):
         for X, y in data:
-            X, y = X.to(DEVICE), y.to(DEVICE)
+            X, y = X.to(model.device), y.to(model.device)
             X = X.unsqueeze(1)
 
             # Forward pass
             y_logits = model(X)
 
-            if test:
+            if test or spatial_regularization==0.0:
                 # We can't balance losses in test mode, so we only calculate performance loss
                 performance_loss = loss_fn(y_logits, y)
-                spatial_loss = torch.tensor(0.0, device=DEVICE)
+                spatial_loss = torch.tensor(0.0, device=model.device)
             else:
                 # Calculate balanced loss based on performance loss and spatial loss
                 performance_loss, spatial_loss = balanced_loss.calculate_loss(y_logits, y)
@@ -79,7 +75,7 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, spatial_gr
 
 
 def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, optimizer,
-                spatial_regularization=0.0, spatial_grid_width=6, disable_logs=False):
+                spatial_parameters, disable_logs=False):
     """
     Trains model for set amount of epochs.
     :param model:
@@ -88,8 +84,7 @@ def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, opt
     :param max_epochs:
     :param loss_fn:
     :param optimizer:
-    :param spatial_regularization: regularization parameter for spatial loss.
-    :param spatial_grid_width: width of the grid for spatial loss.
+    :param spatial_parameters: parameters for spatial loss.
     :param disable_logs: False to print logs, True if not.
     :return: Highest performing checkpoint, Logs with metrics for every epoch.
     """
@@ -105,15 +100,11 @@ def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, opt
     for epoch in tqdm(range(max_epochs), disable=disable_logs):
         # Train step
         train_acc, train_loss_data = step(model, train_loader, loss_fn, optimizer,
-                                          spatial_regularization=spatial_regularization,
-                                          spatial_grid_width=spatial_grid_width,
-                                          test=False)
+                                          **spatial_parameters, test=False)
 
         # Test step
         validation_acc, valid_loss_data = step(model, validation_loader, loss_fn, optimizer,
-                                               spatial_regularization=spatial_regularization,
-                                               spatial_grid_width=spatial_grid_width,
-                                               test=True)
+                                               **spatial_parameters, test=True)
 
         if not disable_logs:
             print(

@@ -1,0 +1,21 @@
+{
+  "model": {
+    "sensors": 70,
+    "samples": 251,
+    "num_classes": 2,
+    "filter_size": 16,
+    "dropout": 0.5,
+    "spatial_grid_width": 6
+  },
+  "spatial": {
+    "spatial_regularization": 0,
+    "moving_average": 0.1
+  },
+  "training": {
+    "learning_rate": 0.001,
+    "random_seed": 42,
+    "device": "cuda:0"
+  },
+  "preprocessed_data": "./preprocessed_data",
+  "results_path": "./results"
+}

@@ -4,21 +4,22 @@ Preprocesses data for all subjects from the original dataset and stores them in 
 
 import os
 import pickle
+import sys
 
 from tqdm import tqdm
 
 import preprocess_pipeline
 
 if __name__ == '__main__':
-    # Todo: Move paths to config
-    ORIGINAL_DATA_DIRECTORY = './topography/data/FaceRecognition'
-    PREPROCESSED_DATA_DIRECTORY = './topo/preprocessed_data'
 
-    d_list = os.listdir(ORIGINAL_DATA_DIRECTORY)
+    PREPROCESSED_DATA_DIRECTORY = './preprocessed_data'
+    original_data = sys.argv[1]
+
+    d_list = os.listdir(original_data)
 
     for d in tqdm(d_list):
         if d.startswith('sub'):
-            raw_data = preprocess_pipeline.load_subject_data(d)
+            raw_data = preprocess_pipeline.load_subject_data(d, original_data)
             train_set, test_set = preprocess_pipeline.preprocess_data(raw_data)
 
             os.makedirs(os.path.join(PREPROCESSED_DATA_DIRECTORY, d), exist_ok=True)

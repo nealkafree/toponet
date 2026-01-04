@@ -24,8 +24,10 @@ class ConstrainedLinear(nn.Linear):
 
 class EEGNet(nn.Module):
     def __init__(self, sensors: int, samples: int, num_classes: int, filter_size=64, f1=8, depth=2, f2=16,
-                 spatial_layer_size=36, dropout=0.5):
+                 spatial_grid_width=6, dropout=0.5):
         super().__init__()
+        self.spatial_grid_width = spatial_grid_width
+
         self.block1 = nn.Sequential(
             # This layer does 1d convolutions on data from sensors.
             nn.Conv2d(in_channels=1, out_channels=f1, kernel_size=(1, filter_size), padding='same',
@@ -61,10 +63,12 @@ class EEGNet(nn.Module):
         )
         # We have to add one dense layer in order to implement topographical constraints.
         # We use our own implementation again to introduce weights constraint.
-        self.linear = ConstrainedLinear(in_features=f2 * (samples // 32), out_features=spatial_layer_size)
+        self.linear = ConstrainedLinear(in_features=f2 * (samples // 32),
+                                        out_features=spatial_grid_width * spatial_grid_width)
 
         # Classifier layer
-        self.classifier = nn.Linear(in_features=spatial_layer_size, out_features=num_classes)
+        self.classifier = nn.Linear(in_features=spatial_grid_width * spatial_grid_width,
+                                    out_features=num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.block1(x)
@@ -82,3 +86,7 @@ class EEGNet(nn.Module):
         x = self.block2(x)
         x = self.linear(x)
         return x
+
+    @property
+    def device(self):
+        return next(self.parameters()).device

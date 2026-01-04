@@ -12,11 +12,9 @@ def apply_ica(raw_data):
     and reconstructs raw signal from components that left.
     :return: cleaned data
     """
-    # Todo: Move random state to config
     ica = mne.preprocessing.ICA(max_iter="auto", random_state=42)
     ica.fit(raw_data)
     # Threshold number of 5 is empirically tested as giving better accuracy
-    # Todo: Move hyperparameter to config
     eog_indices, eog_scores = ica.find_bads_eog(raw_data, threshold=5)
     ecg_indices, ecg_scores = ica.find_bads_ecg(raw_data, method='correlation', measure='zscore', threshold=5)
     ica.exclude = eog_indices + ecg_indices
@@ -36,7 +34,6 @@ def apply_prep(raw_data):
         'line_freqs': []
     }
 
-    # Todo: Move random state to config
     prep = pyprep.PrepPipeline(raw_data, prep_params, raw_data.get_montage(), random_state=42)
     prep.fit()
 
@@ -67,7 +64,6 @@ def apply_filtering(raw_data):
         start = boundary['onset']
     raw_segments.append(raw_data.copy().crop(start, raw_data.times[-1]))
 
-    # Todo: Move frequencies into config
     for raw_segment in raw_segments:
         raw_segment.filter(l_freq=1, h_freq=40)
 
@@ -100,7 +96,6 @@ def cut_to_trials(raw_data):
 
     # Data is saved in volts, which makes number too small, and we can't train anything
     # To combat this we multiply every data point by the multiplier of 5000
-    # Todo: Move hyperparameter to a config
     voltage_multiplier = 5000
     # Converting to float32 is needed for compatibility with PyTorch
     face_trials = [np.float32(trial) * voltage_multiplier for trial in face_epochs]

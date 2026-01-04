@@ -1,19 +1,14 @@
 import torch
 import numpy as np
 
-# Todo: move to config
-MOVING_AVERAGE_PARAMETER = 0.1
-DEVICE = torch.device("cuda:0")
-
 
 class BalancedLoss:
-    def __init__(self, performance_loss, model, spatial_regularization, spatial_grid_width):
+    def __init__(self, performance_loss, model, spatial_regularization, moving_average):
         self.performance_loss = performance_loss
         self.model = model
         self.dynamic_regularization = 0
-        self.moving_average = MOVING_AVERAGE_PARAMETER
+        self.moving_average = moving_average
         self.spatial_regularization = spatial_regularization
-        self.spatial_grid_width = spatial_grid_width
 
     def spatial_loss(self, weights: torch.Tensor, grid_width: int):
         """
@@ -56,31 +51,28 @@ class BalancedLoss:
         performance_loss = self.performance_loss(y_logits, y)
 
         # Spatial loss
-        if self.spatial_regularization != 0:
-            # Computing gradients for a performance loss on a linear layer with spatial constraint
-            grad = torch.autograd.grad(performance_loss, self.model.linear.weight, retain_graph=True)[0]
 
-            # Calculating spatial loss
-            sp_loss = self.spatial_loss(self.model.linear.weight, self.spatial_grid_width)
+        # Computing gradients for a performance loss on a linear layer with spatial constraint
+        grad = torch.autograd.grad(performance_loss, self.model.linear.weight, retain_graph=True)[0]
 
-            # Computing gradients for a spatial loss on a linear layer
-            sp_grad = torch.autograd.grad(sp_loss, self.model.linear.weight, retain_graph=True)[0]
+        # Calculating spatial loss
+        sp_loss = self.spatial_loss(self.model.linear.weight, self.model.spatial_grid_width)
 
-            # Implementing regularization to balance losses
-            current_regularization = (self.spatial_regularization * torch.linalg.matrix_norm(grad).item()
-                                      / (torch.linalg.matrix_norm(sp_grad).item() + 0.000000001))
+        # Computing gradients for a spatial loss on a linear layer
+        sp_grad = torch.autograd.grad(sp_loss, self.model.linear.weight, retain_graph=True)[0]
 
-            # Updating dynamic regularization
-            if self.dynamic_regularization == 0:
-                dynamic_regularization = current_regularization
-            else:
-                self.dynamic_regularization = MOVING_AVERAGE_PARAMETER * current_regularization + (
-                        1 - MOVING_AVERAGE_PARAMETER) * self.dynamic_regularization
+        # Implementing regularization to balance losses
+        current_regularization = (self.spatial_regularization * torch.linalg.matrix_norm(grad).item()
+                                  / (torch.linalg.matrix_norm(sp_grad).item() + 0.000000001))
 
-            # Balanced spatial loss
-            sp_loss = sp_loss * self.dynamic_regularization
+        # Updating dynamic regularization
+        if self.dynamic_regularization == 0:
+            dynamic_regularization = current_regularization
         else:
-            # If spatial regularization is zero, we don't use a spatial constraint
-            sp_loss = torch.tensor(0.0, device=DEVICE)
+            self.dynamic_regularization = self.moving_average * current_regularization + (
+                    1 - self.moving_average) * self.dynamic_regularization
+
+        # Balanced spatial loss
+        sp_loss = sp_loss * self.dynamic_regularization
 
         return performance_loss, sp_loss

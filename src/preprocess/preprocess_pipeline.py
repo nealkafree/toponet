@@ -7,12 +7,8 @@ import preprocess_functions
 
 mne.set_log_level('WARNING')
 
-# Todo: Move path to config
-ORIGINAL_DATA_DIRECTORY = '/home/daniil.kirillov@unitn.it/topography/data/FaceRecognition'
-
-
-def load_subject_data(subject_name):
-    file_path = os.path.join(ORIGINAL_DATA_DIRECTORY, f"{subject_name}/eeg/{subject_name}_task-FaceRecognition_eeg.set")
+def load_subject_data(subject_name, original_data):
+    file_path = os.path.join(original_data, f"{subject_name}/eeg/{subject_name}_task-FaceRecognition_eeg.set")
     raw_data = mne.io.read_raw_eeglab(file_path, preload=True)
 
     # We need to manually set eog and ecg channels, because mne does not recognise them in this case
@@ -55,7 +51,6 @@ def get_train_test_split(trials, test_fraction):
     Randomly splits dataset to test set of the test_fraction*len(trials) size and the train set (the rest).
     :return: (train_set, test_set)
     """
-    # Todo: Move random seed to config
     random.Random(42).shuffle(trials)
     test_size = int(len(trials) * test_fraction)
     return trials[test_size:], trials[:test_size]
