@@ -50,29 +50,32 @@ class BalancedLoss:
         # Performance loss
         performance_loss = self.performance_loss(y_logits, y)
 
-        # Spatial loss
-
-        # Computing gradients for a performance loss on a linear layer with spatial constraint
-        grad = torch.autograd.grad(performance_loss, self.model.linear.weight, retain_graph=True)[0]
-
-        # Calculating spatial loss
-        sp_loss = self.spatial_loss(self.model.linear.weight, self.model.spatial_grid_width)
-
-        # Computing gradients for a spatial loss on a linear layer
-        sp_grad = torch.autograd.grad(sp_loss, self.model.linear.weight, retain_graph=True)[0]
-
-        # Implementing regularization to balance losses
-        current_regularization = (self.spatial_regularization * torch.linalg.matrix_norm(grad).item()
-                                  / (torch.linalg.matrix_norm(sp_grad).item() + 0.000000001))
-
-        # Updating dynamic regularization
-        if self.dynamic_regularization == 0:
-            dynamic_regularization = current_regularization
+        if self.spatial_regularization == 0.0:
+            sp_loss = torch.tensor(0.0, device=self.model.device)
         else:
-            self.dynamic_regularization = self.moving_average * current_regularization + (
-                    1 - self.moving_average) * self.dynamic_regularization
+            # Spatial loss
 
-        # Balanced spatial loss
-        sp_loss = sp_loss * self.dynamic_regularization
+            # Computing gradients for a performance loss on a linear layer with spatial constraint
+            grad = torch.autograd.grad(performance_loss, self.model.linear.weight, retain_graph=True)[0]
+
+            # Calculating spatial loss
+            sp_loss = self.spatial_loss(self.model.linear.weight, self.model.spatial_grid_width)
+
+            # Computing gradients for a spatial loss on a linear layer
+            sp_grad = torch.autograd.grad(sp_loss, self.model.linear.weight, retain_graph=True)[0]
+
+            # Implementing regularization to balance losses
+            current_regularization = (self.spatial_regularization * torch.linalg.matrix_norm(grad).item()
+                                      / (torch.linalg.matrix_norm(sp_grad).item() + 0.000000001))
+
+            # Updating dynamic regularization
+            if self.dynamic_regularization == 0:
+                dynamic_regularization = current_regularization
+            else:
+                self.dynamic_regularization = self.moving_average * current_regularization + (
+                        1 - self.moving_average) * self.dynamic_regularization
+
+            # Balanced spatial loss
+            sp_loss = sp_loss * self.dynamic_regularization
 
         return performance_loss, sp_loss

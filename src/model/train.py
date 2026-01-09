@@ -42,7 +42,7 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_ave
             # Forward pass
             y_logits = model(X)
 
-            if test or spatial_regularization==0.0:
+            if test:
                 # We can't balance losses in test mode, so we only calculate performance loss
                 performance_loss = loss_fn(y_logits, y)
                 spatial_loss = torch.tensor(0.0, device=model.device)

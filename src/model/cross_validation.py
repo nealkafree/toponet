@@ -21,13 +21,12 @@ def train_with_cross_validation(model_class, config, train_data, test_data, max_
     """
     device = torch.device(config['training']['device'])
 
-    test_loader = DataLoader(test_data, batch_size=64, shuffle=False,
-                             generator=torch.Generator().manual_seed(config['training']['random_seed']))
+    test_loader = DataLoader(test_data, batch_size=64, shuffle=False)
 
     resulting_models = []
     # Prepare cross-validation folds
     kfolds = KFold(n_splits=10, shuffle=True, random_state=config['training']['random_seed'])
-    for i, (train_idx, val_idx) in tqdm(enumerate(kfolds.split(train_data)), total=10):
+    for i, (train_idx, val_idx) in tqdm(enumerate(kfolds.split(train_data)), total=10, disable=disable_logs):
         if not disable_logs:
             print(f'Training on fold {i}')
 
@@ -47,7 +46,7 @@ def train_with_cross_validation(model_class, config, train_data, test_data, max_
         loss_fn = torch.nn.CrossEntropyLoss()
         best_checkpoint, training_history = train.train_model(model, train_loader, validation_loader,
                                                               max_epochs, loss_fn, optimizer,
-                                                              disable_logs=disable_logs, **config['spatial'])
+                                                              config['spatial'], disable_logs=disable_logs)
 
         # Load the best checkpoint
         model = model_class(**config['model']).to(device)
