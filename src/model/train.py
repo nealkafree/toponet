@@ -3,7 +3,7 @@ import copy
 import torch
 from tqdm import tqdm
 
-import loss
+from . import loss
 
 
 def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_average=0.1, test=False):
@@ -75,7 +75,7 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_ave
 
 
 def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, optimizer,
-                spatial_parameters, disable_logs=False):
+                spatial_parameters, disable_logs=False, stop_gap=50):
     """
     Trains model for set amount of epochs.
     :param model:
@@ -86,6 +86,7 @@ def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, opt
     :param optimizer:
     :param spatial_parameters: parameters for spatial loss.
     :param disable_logs: False to print logs, True if not.
+    :param stop_gap: stop training after this number of epochs when validation loss doesn't improve.
     :return: Highest performing checkpoint, Logs with metrics for every epoch.
     """
     best_acc = 0
@@ -96,7 +97,7 @@ def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, opt
         'valid_loss': [], 'valid_sp_loss': [],
         'train_acc': [], 'valid_acc': [],
     }
-    stop_count = 50
+    stop_count = stop_gap
     for epoch in tqdm(range(max_epochs), disable=disable_logs):
         # Train step
         train_acc, train_loss_data = step(model, train_loader, loss_fn, optimizer,
@@ -131,7 +132,7 @@ def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, opt
         # Using performance loss as indication for a moment to stop training
         if valid_loss_data["performance_loss"] < best_loss:
             best_loss = valid_loss_data["performance_loss"]
-            stop_count = 50
+            stop_count = stop_gap
 
         # If 20 epochs passed since lowest loss record was renewed last time - stop training
         stop_count -= 1

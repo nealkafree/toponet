@@ -70,7 +70,7 @@ class BalancedLoss:
 
             # Updating dynamic regularization
             if self.dynamic_regularization == 0:
-                dynamic_regularization = current_regularization
+                self.dynamic_regularization = current_regularization
             else:
                 self.dynamic_regularization = self.moving_average * current_regularization + (
                         1 - self.moving_average) * self.dynamic_regularization
