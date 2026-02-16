@@ -6,7 +6,9 @@ from tqdm import tqdm
 from . import loss
 
 
-def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_average=0.1, test=False):
+def step(model: "Model being trained or tested", data: torch.utils.data.DataLoader, loss_fn: callable,
+         optimizer: torch.optim.Optimizer, spatial_regularization: float = 0.0,
+         moving_average: float = 0.1, test=False) -> (dict, dict):
     """
     Performs one training or test step (depends on parameters).
     :param model:
@@ -74,8 +76,11 @@ def step(model, data, loss_fn, optimizer, spatial_regularization=0.0, moving_ave
     return acc, loss_data
 
 
-def train_model(model, train_loader, validation_loader, max_epochs, loss_fn, optimizer,
-                spatial_parameters, disable_logs=False, stop_gap=50):
+def train_model(model: "Model being trained",
+                train_loader: torch.utils.data.DataLoader, validation_loader: torch.utils.data.DataLoader,
+                loss_fn: callable, optimizer: torch.optim.Optimizer,
+                spatial_parameters: dict, stop_gap: int = 50, max_epochs: int = 1000, disable_logs=False) -> (dict,
+                                                                                                              dict):
     """
     Trains model for set amount of epochs.
     :param model:

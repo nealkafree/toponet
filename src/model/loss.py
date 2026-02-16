@@ -3,14 +3,19 @@ import numpy as np
 
 
 class BalancedLoss:
-    def __init__(self, performance_loss, model, spatial_regularization, moving_average):
+    """
+    Class that helps to calculate and to balance performance and spatial losses.
+    """
+
+    def __init__(self, performance_loss: callable, model: "Model we train",
+                 spatial_regularization: float, moving_average: float) -> None:
         self.performance_loss = performance_loss
         self.model = model
         self.dynamic_regularization = 0
         self.moving_average = moving_average
         self.spatial_regularization = spatial_regularization
 
-    def spatial_loss(self, weights: torch.Tensor, grid_width: int):
+    def spatial_loss(self, weights: torch.Tensor, grid_width: int) -> torch.Tensor:
         """
         Calculates the spatial loss for a set of weights.
         :param weights: weights tensor.
@@ -40,7 +45,7 @@ class BalancedLoss:
         # We return an average distance.
         return sp_loss / num_neighbours if num_neighbours > 0 else sp_loss
 
-    def calculate_loss(self, y_logits, y):
+    def calculate_loss(self, y_logits: torch.tensor, y: torch.Tensor) -> (torch.Tensor, torch.Tensor):
         """
         Calculates performance loss, spatial loss and balances them based on their gradient magnitudes.
         :param y_logits: logits tensor.

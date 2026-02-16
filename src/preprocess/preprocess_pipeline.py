@@ -3,11 +3,11 @@ import random
 
 import mne
 
-import preprocess_functions
+from . import preprocess_functions
 
-mne.set_log_level('WARNING')
+mne.set_log_level('CRITICAL')
 
-def load_subject_data(subject_name, original_data):
+def load_subject_data(subject_name: str, original_data: str) -> mne.io.Raw:
     file_path = os.path.join(original_data, f"{subject_name}/eeg/{subject_name}_task-FaceRecognition_eeg.set")
     raw_data = mne.io.read_raw_eeglab(file_path, preload=True)
 
@@ -16,7 +16,7 @@ def load_subject_data(subject_name, original_data):
     return raw_data
 
 
-def preprocess_data(raw_data):
+def preprocess_data(raw_data: mne.io.Raw) -> (list, list):
     """
     Filtering, cleaning,  cutting raw signal to trials and dividing to test and train sets.
     :return: (train_set, test_set) of (trial, label) as items.
@@ -45,7 +45,7 @@ def preprocess_data(raw_data):
     return face_train + scrambled_train, face_test + scrambled_test
 
 
-def get_train_test_split(trials, test_fraction):
+def get_train_test_split(trials: list, test_fraction: float) -> (list, list):
     """
     Quick implementation of a split, just to not import additional libraries.
     Randomly splits dataset to test set of the test_fraction*len(trials) size and the train set (the rest).

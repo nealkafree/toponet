@@ -8,14 +8,14 @@ from sklearn.model_selection import KFold
 from . import train
 
 
-def train_with_cross_validation(model_class, config, train_data, test_data, max_epochs, disable_logs=False):
+def train_with_cross_validation(model_class, config: dict, train_data: list, test_data: list,
+                                disable_logs=False) -> list:
     """
     Trains several models on provided data using 10-fold cross validation.
     :param model_class: class of models we want to train.
     :param config: parameters for models. ['model'] - parameters of model, ['spatial'] - parameters for spatial component.
     :param train_data:
     :param test_data:
-    :param max_epochs:
     :param disable_logs: False to print logs, True if not.
     :return: trained models with additional information.
     """
@@ -45,9 +45,10 @@ def train_with_cross_validation(model_class, config, train_data, test_data, max_
         optimizer = torch.optim.Adam(model.parameters(), lr=config['training']['learning_rate'])
         loss_fn = torch.nn.CrossEntropyLoss()
         best_checkpoint, training_history = train.train_model(model, train_loader, validation_loader,
-                                                              max_epochs, loss_fn, optimizer,
+                                                              loss_fn, optimizer,
                                                               config['spatial'], disable_logs=disable_logs,
-                                                              stop_gap=config['training']['stop_gap'])
+                                                              stop_gap=config['training']['stop_gap'],
+                                                              max_epochs=config['training']['max_epochs'])
 
         # Load the best checkpoint
         model = model_class(**config['model']).to(device)

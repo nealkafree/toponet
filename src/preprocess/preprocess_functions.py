@@ -5,7 +5,7 @@ import numpy as np
 mne.set_log_level('WARNING')
 
 
-def apply_ica(raw_data):
+def apply_ica(raw_data: mne.io.Raw) -> mne.io.Raw:
     """
     Applies Independent Component Analysis to raw data in order to clean artefacts.
     Divides raw EEG into independent components, drops those components that highly correlate with EOG and ECG channels
@@ -22,7 +22,7 @@ def apply_ica(raw_data):
     return raw_data
 
 
-def apply_prep(raw_data):
+def apply_prep(raw_data: mne.io.Raw) -> mne.io.Raw:
     """
     Applies PREP pipeline to raw data in order to do robust referencing and interpolate bad channels.
     PREP - https://www.frontiersin.org/journals/neuroinformatics/articles/10.3389/fninf.2015.00016/full
@@ -45,7 +45,7 @@ def apply_prep(raw_data):
     return new_raw
 
 
-def apply_filtering(raw_data):
+def apply_filtering(raw_data: mne.io.Raw) -> mne.io.Raw:
     """
     Applies bandpass filter to the EEG signal.
     :return: filtered raw signal
@@ -73,7 +73,7 @@ def apply_filtering(raw_data):
     return raw_data
 
 
-def cut_to_trials(raw_data):
+def cut_to_trials(raw_data: mne.io.Raw) -> (mne.Epochs, mne.Epochs):
     """
     Cuts the experiment to trials of one second length (starting from the onset of the stimulus)
     and applies baseline correction to them.

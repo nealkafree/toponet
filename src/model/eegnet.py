@@ -23,8 +23,13 @@ class ConstrainedLinear(nn.Linear):
 
 
 class EEGNet(nn.Module):
+    """
+    Implementation of EEGNet for the task of training topographical neural networks
+    https://arxiv.org/abs/1611.08024
+    """
+
     def __init__(self, sensors: int, samples: int, num_classes: int, filter_size=64, f1=8, depth=2, f2=16,
-                 spatial_grid_width=6, dropout=0.5):
+                 spatial_grid_width=6, dropout=0.5) -> None:
         super().__init__()
         self.spatial_grid_width = spatial_grid_width
 
@@ -88,5 +93,5 @@ class EEGNet(nn.Module):
         return x
 
     @property
-    def device(self):
+    def device(self) -> torch.device:
         return next(self.parameters()).device
