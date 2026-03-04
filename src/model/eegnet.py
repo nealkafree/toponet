@@ -32,6 +32,7 @@ class EEGNet(nn.Module):
                  spatial_grid_width=6, dropout=0.5) -> None:
         super().__init__()
         self.spatial_grid_width = spatial_grid_width
+        self.dropout = nn.Dropout(dropout)
 
         self.block1 = nn.Sequential(
             # This layer does 1d convolutions on data from sensors.
@@ -68,8 +69,8 @@ class EEGNet(nn.Module):
         )
         # We have to add one dense layer in order to implement topographical constraints.
         # We use our own implementation again to introduce weights constraint.
-        self.linear = ConstrainedLinear(in_features=f2 * (samples // 32),
-                                        out_features=spatial_grid_width * spatial_grid_width)
+        self.spatial = ConstrainedLinear(in_features=f2 * (samples // 32),
+                                         out_features=spatial_grid_width * spatial_grid_width)
 
         # Classifier layer
         self.classifier = nn.Linear(in_features=spatial_grid_width * spatial_grid_width,
@@ -78,8 +79,7 @@ class EEGNet(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.block1(x)
         x = self.block2(x)
-        x = self.linear(x)
-        x = nn.functional.relu(x)
+        x = self.dropout(F.elu(self.spatial(x)))
         return self.classifier(x)
 
     def spatial_activation(self, x: torch.Tensor) -> torch.Tensor:
@@ -89,7 +89,7 @@ class EEGNet(nn.Module):
         x = x.unsqueeze(0).unsqueeze(0)
         x = self.block1(x)
         x = self.block2(x)
-        x = self.linear(x)
+        x = self.spatial(x)
         return x
 
     @property

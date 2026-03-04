@@ -61,13 +61,13 @@ class BalancedLoss:
             # Spatial loss
 
             # Computing gradients for a performance loss on a linear layer with spatial constraint
-            grad = torch.autograd.grad(performance_loss, self.model.linear.weight, retain_graph=True)[0]
+            grad = torch.autograd.grad(performance_loss, self.model.spatial.weight, retain_graph=True)[0]
 
             # Calculating spatial loss
-            sp_loss = self.spatial_loss(self.model.linear.weight, self.model.spatial_grid_width)
+            sp_loss = self.spatial_loss(self.model.spatial.weight, self.model.spatial_grid_width)
 
             # Computing gradients for a spatial loss on a linear layer
-            sp_grad = torch.autograd.grad(sp_loss, self.model.linear.weight, retain_graph=True)[0]
+            sp_grad = torch.autograd.grad(sp_loss, self.model.spatial.weight, retain_graph=True)[0]
 
             # Implementing regularization to balance losses
             current_regularization = (self.spatial_regularization * torch.linalg.matrix_norm(grad).item()

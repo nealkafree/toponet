@@ -21,7 +21,7 @@ def train_with_cross_validation(model_class, config: dict, train_data: list, tes
     """
     device = torch.device(config['training']['device'])
 
-    test_loader = DataLoader(test_data, batch_size=64, shuffle=False)
+    test_loader = DataLoader(test_data, batch_size=64, shuffle=False, num_workers=8)
 
     resulting_models = []
     # Prepare cross-validation folds
@@ -33,8 +33,8 @@ def train_with_cross_validation(model_class, config: dict, train_data: list, tes
         # Prepare train and validation data loaders
         train_subset = Subset(train_data, train_idx)
         val_subset = Subset(train_data, val_idx)
-        train_loader = DataLoader(train_subset, batch_size=64, shuffle=False)
-        validation_loader = DataLoader(val_subset, batch_size=64, shuffle=False)
+        train_loader = DataLoader(train_subset, batch_size=64, shuffle=False, num_workers=8)
+        validation_loader = DataLoader(val_subset, batch_size=64, shuffle=False, num_workers=8)
 
         # Setting seeds for weight initialization
         torch.manual_seed(config['training']['random_seed'])
