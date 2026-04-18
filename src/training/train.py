@@ -78,9 +78,9 @@ def step(model: "Model being trained or tested", data: torch.utils.data.DataLoad
 
 def train_model(model: "Model being trained",
                 train_loader: torch.utils.data.DataLoader, validation_loader: torch.utils.data.DataLoader,
-                loss_fn: callable, optimizer: torch.optim.Optimizer,
-                spatial_parameters: dict, stop_gap: int = 50, max_epochs: int = 1000, disable_logs=False) -> (dict,
-                                                                                                              dict):
+                loss_fn: callable, optimizer: torch.optim.Optimizer, wandb_logger: callable, fold_number: int,
+                spatial_parameters: dict, stop_gap: int = 50,
+                max_epochs: int = 1000, disable_logs=False) -> (dict, dict):
     """
     Trains model for set amount of epochs.
     :param model:
@@ -89,6 +89,8 @@ def train_model(model: "Model being trained",
     :param max_epochs:
     :param loss_fn:
     :param optimizer:
+    :param wandb_logger:
+    :param fold_number:
     :param spatial_parameters: parameters for spatial loss.
     :param disable_logs: False to print logs, True if not.
     :param stop_gap: stop training after this number of epochs when validation loss doesn't improve.
@@ -116,13 +118,24 @@ def train_model(model: "Model being trained",
             print(
                 f'After epoch {epoch}, avg training loss is {train_loss_data["performance_loss"] + train_loss_data["spatial_loss"]:.4f}, avg validation loss is {valid_loss_data["performance_loss"] + valid_loss_data["spatial_loss"]:.4f}, acc on train set is {train_acc * 100:.2f}% and acc on validation set is {validation_acc * 100:.2f}%')
 
-        # Saving logs
-        training_history['train_loss'].append(train_loss_data['performance_loss'])
-        training_history['train_sp_loss'].append(train_loss_data['spatial_loss'])
-        training_history['valid_loss'].append(valid_loss_data['performance_loss'])
-        training_history['valid_sp_loss'].append(valid_loss_data['spatial_loss'])
-        training_history['train_acc'].append(train_acc)
-        training_history['valid_acc'].append(validation_acc)
+        wandb_logger.log(
+            {
+                f'fold_{fold_number}/train_performance_loss': train_loss_data['performance_loss'],
+                f'fold_{fold_number}/train_spatial_loss': train_loss_data['spatial_loss'],
+                f'fold_{fold_number}/validation_loss': valid_loss_data['performance_loss'],
+                f'fold_{fold_number}/train_accuracy': train_acc,
+                f'fold_{fold_number}/validation_accuracy': validation_acc,
+                f'fold_{fold_number}/epoch': epoch,
+            }
+        )
+
+        # # Saving logs
+        # training_history['train_loss'].append(train_loss_data['performance_loss'])
+        # training_history['train_sp_loss'].append(train_loss_data['spatial_loss'])
+        # training_history['valid_loss'].append(valid_loss_data['performance_loss'])
+        # training_history['valid_sp_loss'].append(valid_loss_data['spatial_loss'])
+        # training_history['train_acc'].append(train_acc)
+        # training_history['valid_acc'].append(validation_acc)
 
         # Saving model with the highest validation accuracy
         if validation_acc > best_acc:
@@ -131,7 +144,7 @@ def train_model(model: "Model being trained",
                 'epoch': epoch,
                 'state_dict': copy.deepcopy(model.state_dict()),
                 'accuracy': validation_acc,
-                'loss': valid_loss_data["performance_loss"] + valid_loss_data["spatial_loss"],
+                'loss': valid_loss_data["performance_loss"],
             }
 
         # Using performance loss as indication for a moment to stop training
@@ -139,7 +152,7 @@ def train_model(model: "Model being trained",
             best_loss = valid_loss_data["performance_loss"]
             stop_count = stop_gap
 
-        # If 20 epochs passed since lowest loss record was renewed last time - stop training
+        # If stop_gap epochs passed since lowest loss record was renewed last time - stop training
         stop_count -= 1
         if stop_count == 0:
             break
