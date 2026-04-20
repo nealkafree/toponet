@@ -125,7 +125,7 @@ def train_model(model: "Model being trained",
                 f'fold_{fold_number}/validation_loss': valid_loss_data['performance_loss'],
                 f'fold_{fold_number}/train_accuracy': train_acc,
                 f'fold_{fold_number}/validation_accuracy': validation_acc,
-                f'fold_{fold_number}/epoch': epoch,
+                f'epoch': epoch,
             }
         )
 
