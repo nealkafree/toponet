@@ -17,6 +17,7 @@ def set_up_logger(config):
         }
     }
 
+    wandb.login()
     wandb_run = wandb.init(project=config['project_name'], name=name, settings={'silent': True}, config=logger_config)
     model_artifact = wandb.Artifact(
         name=name,
