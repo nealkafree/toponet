@@ -18,10 +18,10 @@ if args.participant:
     config['participant'] = args.participant
 
 if args.regularization:
-    config['spatial']['spatial_regularization'] = args.regularization
+    config['spatial']['spatial_regularization'] = float(args.regularization)
 
 if args.random_state:
-    config['training']['random_seed'] = args.random_state
+    config['training']['random_seed'] = int(args.random_state)
 
 if args.device:
     config['training']['device'] = args.device

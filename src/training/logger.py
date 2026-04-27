@@ -34,7 +34,8 @@ def log_summary(wandb_logger, test_accuracies, checkpoint_epochs):
 
 
 def synchronise_dataset(config):
-    collections = wandb.Api().artifact_collections(
+    api = wandb.Api()
+    collections = api.artifact_collections(
         type_name="dataset", project_name=config['project_name']
     )
 
@@ -42,7 +43,6 @@ def synchronise_dataset(config):
     for dataset in collections:
         if not dataset.name in os.listdir(config['preprocessed_data']):
             print(f'Downloading dataset for {dataset.name}')
-            api = wandb.Api()
             artifact = api.artifact(f"{config['project_name']}/{dataset.name}:latest")
             artifact.download(os.path.join(config['preprocessed_data'], dataset.name))
 
@@ -52,3 +52,15 @@ def synchronise_dataset(config):
         }
 
     return dataset_paths
+
+
+def synchronise_models(artifacts, config):
+    model_paths = {}
+    for artifact in artifacts:
+        dir_name = '_'.join([artifact.name, artifact.logged_by().id])
+        if dir_name not in config['trained_models_path']:
+            os.makedirs(os.path.join(config['trained_models_path'], dir_name))
+            artifact.download(os.path.join(config['trained_models_path'], dir_name))
+        model_paths[artifact.name] = os.path.join(config['trained_models_path'], dir_name)
+    return model_paths
+
