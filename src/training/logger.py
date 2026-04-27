@@ -57,8 +57,8 @@ def synchronise_dataset(config):
 def synchronise_models(artifacts, config):
     model_paths = {}
     for artifact in artifacts:
-        dir_name = '_'.join([artifact.name, artifact.logged_by().id])
-        if dir_name not in config['trained_models_path']:
+        dir_name = '_'.join([artifact.name.split(':')[0], artifact.logged_by().id])
+        if dir_name not in os.listdir(config['trained_models_path']):
             os.makedirs(os.path.join(config['trained_models_path'], dir_name))
             artifact.download(os.path.join(config['trained_models_path'], dir_name))
         model_paths[artifact.name] = os.path.join(config['trained_models_path'], dir_name)
